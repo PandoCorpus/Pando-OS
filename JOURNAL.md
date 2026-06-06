@@ -1,86 +1,54 @@
-# Build Journal
+The Journal
+A timestamped record of design decisions, wrong turns, and field research.
 
-*A dated log of how this project came to be, what changed, and why.*
-*Author: Charles Hendra Kurniawan Kwee — © 2026 All rights reserved.*
+May 16, 2026 — The Pivot
+This didn't start as an institutional memory system. It started much smaller: a clinical ambient intelligence box. A physical transcription tool to sit in a doctor's office, log a consultation, and extract medical details so the clinician could actually look at the patient instead of staring at a screen.
 
----
+But the text wasn't the problem. The transcription layer is a commodity now.
 
-## Why a journal?
+The real problem hit me when I looked at what happens after the patient leaves. Where does that insight go? How does it connect to something the patient mentioned three visits ago? If that doctor leaves the clinic, does that hard-earned clinical intuition just evaporate?
 
-Building in public is a credibility mechanism. Anyone can claim an idea. A timestamped log of decisions, corrections, and field research is harder to fake — and more valuable for the same reason.
+A note is just text. It’s a snapshot. But expertise is a continuous, evolving belief state. I realized I didn't want to build a better filing cabinet for session notes. I wanted to build an architecture that models what a professional thinks is true, tracks how those hypotheses perform against real-world outcomes over time, and preserves that judgment so it doesn't walk out the door when someone changes jobs.
 
-I'm not logging this to show a clean story. I'm logging it because the real story — including the wrong turns — is the actual proof of work.
+Moving away from the medical box concept. Expanding the scope. This isn't a tool; it’s an operating system for professional judgment.
 
----
+May 30, 2026 — Confronting the Market (Brokers & Collisions)
+I’ve been spending the last two weeks talking to mortgage brokers here in Sydney to ground the architecture in a hyper-regulated environment. ASIC’s Best Interests Duty (BID) review is live right now, so the compliance pain is top-of-mind for them.
 
-## Entry 001 — June 2026
+My initial assumptions got thoroughly wrecked by reality:
 
-**Where this started**
+Assumption 1: Voice transcription is the core input.
 
-The first version of this idea was much smaller. I was thinking about a transcription tool for doctors — something that could listen to a consultation, extract the relevant clinical details, and surface them clearly so the practitioner could focus on the patient rather than the notes.
+Reality: Wrong. A broker’s life is 90% email. Sensitive conversations happen on voice precisely because they don't want them recorded. The system has to be email-first.
 
-But the more I sat with that problem, the more I realized the transcription was the least interesting part. The interesting part was what happens to that information *after* the consultation. Does it connect to what the patient said three visits ago? Does it change the practitioner's understanding of a pattern they've been observing for months? Does it survive when the doctor changes roles?
+Assumption 2: The value is in generating sleek executive reports.
 
-That question — what happens to professional knowledge over time — is what this project is actually about.
+Reality: Brokers don't care about pretty PDFs. They care about populating their aggregator's CRM with a bulletproof "reason why" trail to survive an audit. The output layer needs to feed their existing CRMs, not replace them.
 
-**The first big shift: from transcription tool to memory system**
+Assumption 3: The pain is all in the initial loan origination.
 
-The early design was organized around sessions. Each session produced a note. The notes accumulated. That was the "memory."
+Reality: Back-book management is a massive, leaking bucket. Systematically tracking existing clients to see if a better rate has opened up is an afterthought because they don't have the bandwidth. The lifecycle review has to be a core engine feature.
 
-But a note isn't a belief. A session isn't a decision. And a collection of session notes — however well-organized — doesn't tell you whether the practitioner's working hypothesis about this patient is still holding, or whether three recent outcomes should be causing a rethink.
+The Name Collision:
+Ran into a major roadblock today. Discovered an open-source project that independently converged on my original name, my exact security posture (local-first), and even the same biological metaphor. It’s unsettling but validating.
 
-I needed to model not just what happened, but what the practitioner currently *thinks* is true — and track whether reality is confirming or challenging that view.
+The difference is intent: they are building a personal productivity assistant. I am building an institutional memory OS for heavily regulated, high-stakes verticals. The vision stands, but I need a new name. PandoCorpus is a temporary placeholder for now.
 
-**The second shift: from memory system to operating system**
+June 03, 2026 — The Epistemic Stack
+Spent the night mapping out how the local graph database needs to treat data. Most AI applications treat all text tokens as equally weighted. That’s a fatal flaw for institutional memory. If a system updates its core values because a short-term statistical trend makes dishonesty look profitable, the system is corrupt.
 
-Once I started modeling beliefs and their relationship to outcomes, I realized the problem was bigger than one profession. Every regulated professional has the same fundamental challenge: they accumulate judgment over time, their judgment needs to be traceable for compliance purposes, and the organization around them struggles to preserve that judgment when people move on.
+The architecture needs three distinct authority layers, hardcoded into the schema:
 
-The specific profession changes. The architecture doesn't.
+Reality (Immutable Events): What actually happened. Raw emails, documents, closed files. Never deleted.
 
-That's when it became an OS — a generic core that any profession can specialize with the right configuration.
+Interpretation (Hypotheses): What the system infers. Held with probabilistic confidence, never treated as absolute fact.
 
-**What field research changed**
+Wisdom (Human Commitments): Requires explicit human authority to change.
 
-I spent time talking with actual mortgage brokers in Australia. Several things I assumed turned out to be wrong:
+Within the Wisdom layer, I’m splitting beliefs into three distinct primitives:
 
-- I assumed voice transcription was the key input. It isn't — the broker's work is ~90% email. Voice is reserved for sensitive conversations that nobody wants recorded.
-- I assumed the value was in generating reports. It's mostly in helping the broker populate their aggregator's CRM — specifically the "reasons why" reasoning trail that the Best Interests Duty (ASIC RG 273) requires.
-- I assumed the broker's biggest pain was the initial loan origination. It's equally — possibly more — in the ongoing back-book management: systematically reviewing existing clients to see if a better deal has become available.
+Empirical Beliefs: Working hypotheses about borrower behavior or market trends. These are falsifiable and must update when reality proves them wrong.
 
-Each of these corrections changed the design. The input layer became email-first. The output layer became CRM-oriented. The lifecycle review cadence became a core feature rather than an afterthought.
+Procedural Habits: How the firm executes tasks. These update when a more efficient workflow emerges.
 
-**What I found when I went looking for competitors**
-
-I found an open-source project that had independently converged on the same name, the same metaphor, and much of the same infrastructure philosophy. Same local-first architecture, same security posture, same mycelium metaphor, even a written "constitution."
-
-That was both unsettling and validating. The infrastructure instincts were right enough that someone else arrived at them independently. But the product is completely different — they're building a personal productivity assistant; I'm building a professional memory OS for regulated verticals. The name needed to change. The vision didn't.
-
-**Where the architecture landed**
-
-The core design has three authority layers:
-- **Reality**: what actually happened (immutable events, never deleted)
-- **Interpretation**: what the system thinks it means (held with confidence, not treated as fact)
-- **Wisdom**: what the entity believes and how it acts (requires human authority to change)
-
-Within Wisdom, there are three types with different rules about what can change them:
-- Empirical beliefs: learned from outcomes, should update when reality contradicts them
-- Procedural habits: how we do things, updates when better methods emerge
-- Identity commitments: what we've chosen to stand for, changes only by conscious decision — not by evidence alone
-
-That last distinction took a while to get right. Most AI systems treat all beliefs as equivalent. But an organization's integrity shouldn't update because a competitor profits from dishonesty, and a working hypothesis about borrower behavior shouldn't be treated as a core value just because someone held it for a long time. The architecture had to handle both without conflating them.
-
-**What I haven't figured out yet**
-
-- The right name (the original collides with an existing project; working on it)
-- The exact right cut of the Phase 0 build — thin enough to validate quickly, complete enough to produce the audit export the broker actually needs
-- Whether to fork existing open-source infrastructure for the security layer or build fresh
-
-More to come.
-
----
-
-*Next entry: when I have the Phase 0 build spec locked and a design-partner broker confirmed.*
-
----
-
-*Charles Hendra Kurniawan Kwee, June 2026*
+Identity Commitments: "We never mislead a client to win a deal." This is non-falsifiable. It’s a choice of character, not a prediction. A competitor making money by cheating is not a reason for the system to optimize away our integrity.
